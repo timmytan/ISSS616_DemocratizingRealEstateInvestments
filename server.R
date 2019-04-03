@@ -4,7 +4,7 @@ shinyServer(function(input, output,session) {
             median <- median(year2018$TransactedPrice)
             valueBox(
                   paste0("$", median), paste("Median Home Value in 2018"),
-                  icon = NULL, color = "blue")
+                  icon = NULL, color = "red")
       })
       
       # annualized change in median home values from 2014 to 2018
@@ -14,8 +14,8 @@ shinyServer(function(input, output,session) {
             overallChange <- (median2018-median2014)/median2014
             annualizedChange <- (1+overallChange)^(1/5) - 1
             valueBox(
-                  paste0(round(annualizedChange * 100, 4), "%"), paste("Annualized Change in Median Home Value from 2014 - 2018"),
-                  icon = NULL, color = "green")
+                  paste0(round(annualizedChange * 100, 4), "%"), paste("Annualized Price Change from 2014 - 2018"),
+                  icon = NULL, color = "blue")
       })
       
       # top 10 planning areas by annual growth rate 
@@ -29,7 +29,7 @@ shinyServer(function(input, output,session) {
             p <- nPlot(annualizedChange ~ `year2014$PlanningArea`, data = top10, type = "discreteBarChart", dom = "top10PlanningArea")
             p$xAxis(axisLabel = "Plannning Region")
             p$yAxis(axisLabel = "Annual Growth Rate (%)", width = 40)
-            p$set(height = 600, width = 800)
+            p$set(height = 300, width = 1300)
             return(p)
       })
       

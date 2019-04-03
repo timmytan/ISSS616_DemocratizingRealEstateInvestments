@@ -1,4 +1,4 @@
-ui <- dashboardPage(skin = "green",
+ui <- dashboardPage(skin = "purple",
                     dashboardHeader(title = "Democratizing Real Estate Investments", titleWidth = 400),
                     dashboardSidebar(width = 400,
                                      sidebarMenu(id = "sbm",
@@ -41,20 +41,61 @@ ui <- dashboardPage(skin = "green",
                                         fluidPage(
                                               fluidRow(
                                                     column(width = 12,
-                                                           valueBoxOutput("median2018Box", width = 3),
-                                                           valueBoxOutput("annualizedChangeInMedianBox", width =4)
+                                                           valueBoxOutput("median2018Box", width =3),
+                                                           valueBoxOutput("annualizedChangeInMedianBox", width =3),
+                                                           box(title = h2("Output 3"), width = 3, height = 100, background = "green"),
+                                                           box(title = h2("Output 4"), width = 3, height = 100, background = "yellow")
                                                     )
                                               ),
                                               
                                               fluidRow(
                                                     column(width = 12,
                                                            box(
+                                                                 h2("ISSS616/AY2018-19T2/G6"),
+                                                                 h3("Democratizing Real Estate Investments"),
+                                                                 width = 4,
+                                                                 height = 600,
+                                                                 background = "navy",
+                                                                 solidHeader = FALSE,
+                                                                 collapsible = FALSE,
+                                                                 collapsed = FALSE,
+                                                                 p(
+                                                                       paste("Our ASAR Project")
+                                                                 )
+                                                           ),
+                                                           
+                                                           box(
+                                                                 title = "Heat Map based on Transaction Volume",
+                                                                 width = 8,
+                                                                 height = 600,
+                                                                 solidHeader = TRUE,
+                                                                 collapsible = FALSE,
+                                                                 collapsed = FALSE
+                                                           )#end of box
+                                                    )#end of column
+                                              ),#end of fluidRow
+                                              
+                                              fluidRow(
+                                                    column(width = 12,
+                                                           box(
                                                                  title = "Top 10 Areas by Annualized Growth Rate",
                                                                  solidHeader = TRUE,
-                                                                 width = 7,
-                                                                 height = 650,
+                                                                 width = 12,
+                                                                 height = 350,
                                                                  collapsible = TRUE,
                                                                  showOutput("top10PlanningArea", "nvd3", package = "rCharts")
+                                                           )#end of box
+                                                    )#end of column
+                                              ),#end of fluidRow
+                                              
+                                              fluidRow(
+                                                    column(width = 12,
+                                                           box(
+                                                                 title = "Top 10 Areas - Annual Price Change (PSF)",
+                                                                 solidHeader = TRUE,
+                                                                 width = 12,
+                                                                 height = 600,
+                                                                 collapsible = TRUE
                                                            )#end of box
                                                     )#end of column
                                               )#end of fluidRow
