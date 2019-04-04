@@ -3,7 +3,7 @@ shinyServer(function(input, output,session) {
       output$median2018Box <- renderValueBox({
             median <- median(year2018$TransactedPrice)
             valueBox(
-                  paste0("$", median), paste("Median Home Value in 2018"),
+                  paste0("$", median), h4("Median Home Value in 2018"),
                   icon = NULL, color = "red")
       })
       
@@ -14,8 +14,24 @@ shinyServer(function(input, output,session) {
             overallChange <- (median2018-median2014)/median2014
             annualizedChange <- (1+overallChange)^(1/5) - 1
             valueBox(
-                  paste0(round(annualizedChange * 100, 4), "%"), paste("Annualized Price Change from 2014 - 2018"),
+                  paste0(round(annualizedChange * 100, 4), "%"), h4("Annualized Price Change - 2014 to 2018"),
                   icon = NULL, color = "blue")
+      })
+      
+      # number of transactions in 2018
+      output$volume2018Box <- renderValueBox({
+            count <- nrow(year2018)
+            valueBox(
+                  paste0(count), h4("Transactions in 2018"),
+                  icon = NULL, color = "green")
+      })
+      
+      # mean PSF in 2018
+      output$meanPSF2018Box <- renderValueBox({
+            mean <- round(mean(year2018$PricePSF),0)
+            valueBox(
+                  paste0("$", mean), h4("Average PSF in 2018"),
+                  icon = NULL, color = "yellow")
       })
       
       # top 10 planning areas by annual growth rate 
@@ -59,7 +75,7 @@ shinyServer(function(input, output,session) {
                   tickFormat = 
                         "#!
                   function(d){
-                  f =  d3.time.format.utc('%b%Y');
+                  f =  d3.time.format.utc('%b %y');
                   return f(new Date( d*24*60*60*1000 ));
                   }
                   !#"
@@ -88,9 +104,8 @@ shinyServer(function(input, output,session) {
       output$minMrtDist <- renderText(input$mrtDist[1])
       output$maxMrtDist <- renderText(input$mrtDist[2])
       
-      
       #########################################################################################
-      #                              Value Analysis Functions                               #
+      #                              Value Analysis Functions                                 #
       #########################################################################################
       
       # get and screen data based upon mrt distance
@@ -144,21 +159,51 @@ shinyServer(function(input, output,session) {
                   colnames(medtsDF) <- c("Time", "TransactionValue")
                   medtsDF$Time <- as.Date.character(medtsDF$Time)
                   
-                  p <- nPlot(TransactionValue ~ Time, type = "lineChart", data = medtsDF, dom = "medPriceTS", height = 400, width = 680)
+                  p <- nPlot(TransactionValue ~ Time, type = "lineChart", data = medtsDF, dom = "medPriceTS")
                   p$xAxis(
                         axisLabel = "Time",
                         tickFormat = 
                               "#!
                         function(d){
-                        f =  d3.time.format.utc('%b-%y');
+                        f =  d3.time.format.utc('%b %y');
                         return f(new Date( d*24*60*60*1000 ));
                         }
                         !#"
                   )
+                  p$set(height = 400, width = 600)
                   p$chart(showLegend = FALSE)
                   
                   return(p)
             })
+      })# end of renderchart
+      
+      output$meanPsfTS <- renderChart({
+            withProgress(message = "Rendering Time-Series for Your Selected Criteria", {
+                  d <- getData()
+                  d <- data.frame(d$PricePSF, d$SaleDate)
+                  colnames(d) <- c("PricePSF", "SaleDate")
+                  z <- xts(d$PricePSF, as.Date(d$SaleDate, "%Y-%m-%d"))
+                  meanPsfTS <- apply.monthly(z, mean)
+                  meanPsfTSDF <- data.frame(date=index(meanPsfTS), coredata(meanPsfTS))
+                  colnames(meanPsfTSDF) <- c("Time", "PricePSF")
+                  meanPsfTSDF$Time <- as.Date.character(meanPsfTSDF$Time)
+                  
+                  p <- nPlot(PricePSF ~ Time, type = "lineChart", data = meanPsfTSDF, dom = "meanPsfTS")
+                  p$xAxis(
+                        axisLabel = "Time",
+                        tickFormat = 
+                              "#!
+                        function(d){
+                        f =  d3.time.format.utc('%b %y');
+                        return f(new Date( d*24*60*60*1000 ));
+                        }
+                        !#"
+                  )
+                  p$set(height = 400, width = 600)
+                  p$chart(showLegend = FALSE)
+                  
+                  return(p)
       })
+})# end of renderchart
       
 })

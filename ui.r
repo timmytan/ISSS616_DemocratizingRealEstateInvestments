@@ -43,8 +43,8 @@ ui <- dashboardPage(skin = "purple",
                                                     column(width = 12,
                                                            valueBoxOutput("median2018Box", width =3),
                                                            valueBoxOutput("annualizedChangeInMedianBox", width =3),
-                                                           box(title = h2("Output 3"), width = 3, height = 100, background = "green"),
-                                                           box(title = h2("Output 4"), width = 3, height = 100, background = "yellow")
+                                                           valueBoxOutput("volume2018Box", width =3),
+                                                           valueBoxOutput("meanPSF2018Box", width =3)
                                                     )
                                               ),
                                               
@@ -54,7 +54,7 @@ ui <- dashboardPage(skin = "purple",
                                                                  h2("ISSS616/AY2018-19T2/G6"),
                                                                  h3("Democratizing Real Estate Investments"),
                                                                  width = 4,
-                                                                 height = 500,
+                                                                 height = 510,
                                                                  background = "navy",
                                                                  solidHeader = FALSE,
                                                                  collapsible = FALSE,
@@ -70,9 +70,9 @@ ui <- dashboardPage(skin = "purple",
                                                            ),
                                                            
                                                            box(
-                                                                 title = "Heat Map based on Transaction Volume",
+                                                                 title = "Heat Map based on Transaction Volume in 2018",
                                                                  width = 8,
-                                                                 height = 500,
+                                                                 height = 510,
                                                                  solidHeader = TRUE,
                                                                  collapsible = FALSE,
                                                                  collapsed = FALSE
@@ -87,7 +87,7 @@ ui <- dashboardPage(skin = "purple",
                                                                  solidHeader = TRUE,
                                                                  width = 12,
                                                                  height = 350,
-                                                                 collapsible = TRUE,
+                                                                 collapsible = FALSE,
                                                                  showOutput("top10PlanningArea", "nvd3", package = "rCharts")
                                                            )#end of box
                                                     )#end of column
@@ -100,7 +100,7 @@ ui <- dashboardPage(skin = "purple",
                                                                  solidHeader = TRUE,
                                                                  width = 12,
                                                                  height = 600,
-                                                                 collapsible = TRUE,
+                                                                 collapsible = FALSE,
                                                                  showOutput("top10TS", "nvd3", package = "rCharts")
                                                            )#end of box
                                                     )#end of column
@@ -111,11 +111,17 @@ ui <- dashboardPage(skin = "purple",
                                 tabItem(tabName = "valueAnalysis",
                                         fluidPage(
                                               fluidRow(
-                                                    column(width = 4,
+                                                    column(width = 12,
                                                            box(
                                                                  h1("Value Analysis"),
+                                                                 h4("The Value Analysis page aims to assist you in making an informed choice of your property purchase. The page uses inferential statistical techniques to: "),
+                                                                 h4(tags$ul(
+                                                                       tags$li("Provide price trend of selected planning region based on parameter inputs like tenure, year of completion, property age, distance to nearest MRT and childcare centre."),
+                                                                       tags$li("Provide comparative options based on similar price ranges. Back-end, we have tested that the price mean for these options are statistically similar through the ANOVA method.")
+                                                                 )
+                                                                 ),
                                                                  width = 12,
-                                                                 height = 160,
+                                                                 height = 250,
                                                                  background = "navy",
                                                                  solidHeader = FALSE,
                                                                  collapsible = FALSE,
@@ -123,8 +129,7 @@ ui <- dashboardPage(skin = "purple",
                                                                  h4("Please select criteria using the options on the sidebar."),
                                                                  actionButton("analyze", label = "Analyze") 
                                                            )
-                                                    )
-                                              ),
+                                                    ),
                                               
                                               conditionalPanel(
                                                     condition = "input.analyze",
@@ -132,12 +137,22 @@ ui <- dashboardPage(skin = "purple",
                                                            box(
                                                                  title = "Median Transaction Value ($) Across Time",
                                                                  solidHeader = TRUE,
-                                                                 width = 7,
-                                                                 height = 650,
+                                                                 width = 6,
+                                                                 height = 500,
                                                                  collapsible = TRUE,
                                                                  showOutput("medPriceTS", "nvd3", package = "rCharts")
+                                                           ),#end of box
+                                                           
+                                                           box(
+                                                                 title = "Mean Price (PSF) Across Time",
+                                                                 solidHeader = TRUE,
+                                                                 width = 6,
+                                                                 height = 500,
+                                                                 collapsible = TRUE,
+                                                                 showOutput("meanPsfTS", "nvd3", package = "rCharts")
                                                            )#end of box
                                                     )#end of column
+                                              )# end of conditional panel
                                               )#end of fluidRow
                                         )#end of fluidPage
                                 )#end of tabItem "valueAnalysis"

@@ -4,22 +4,29 @@ library(rCharts)
 library(lubridate)
 library(plyr)
 library(dplyr)
+library(geojsonio)
 library(ggplot2)
+library(htmltools)
+library(leaflet)
+library(maps)
 library(plotly)
 library(reshape2)
+library(rgdal)
 library(shiny)
 library(shinydashboard)
+library(shinyjs)
+library(sp)
 library(svglite)
 library(stringr)
 library(zoo)
 library(xts)
 
-home <- getwd()
+home <- "C:/Users/Timothy/Documents/MITB Coursework/ISSS616 Applied Statistical Analysis with R/Project/Application/ISSS616_DemocratizingRealEstateInvestments/"
 
 setwd("data")
 
 # Load data
-realis = read.csv("realis2014to2019.csv", header = TRUE, stringsAsFactors = FALSE)
+realis = read.csv("realis2014to2019_Final.csv", header = TRUE, stringsAsFactors = FALSE)
 school = read.csv("Longtitude and Latitude of Popular Primary Schools.csv", header = TRUE, stringsAsFactors = FALSE)
 
 setwd(home)
@@ -37,11 +44,10 @@ dflt <- list(postalCode = "",
              stringsAsFactors = FALSE)
 
 # data cleaning
-realis$SaleDate <- as.Date(x = realis$SaleDate, "%d%B%Y")
-realis$TenureStart <- as.Date(as.character(gsub(".*From", "", realis$Tenure)), "%d/%m/%y")
+realis$SaleDate <- as.Date(x = realis$SaleDate, "%d-%B-%y")
 realis$Tenure <- gsub("\\From.*", "", realis$Tenure)
-realis$TenureLength <- as.numeric(gsub("\\D+", "", realis$Tenure))
-realis$Tenure
+realis$AgeOfProperty <- as.numeric(year(today())) - as.numeric(realis$CompletionDate)
+realis$AgeOfProperty[is.na(realis$AgeOfProperty)] <- 0
 
 # splitting into years
 year2014 <- realis[which(year(realis$SaleDate) == 2014),]
@@ -49,7 +55,6 @@ year2015 <- realis[which(year(realis$SaleDate) == 2015),]
 year2016 <- realis[which(year(realis$SaleDate) == 2016),]
 year2017 <- realis[which(year(realis$SaleDate) == 2017),]
 year2018 <- realis[which(year(realis$SaleDate) == 2018),]
-
 
 # Run the application 
 shinyApp(ui = "ui.R", server = "server.R")
