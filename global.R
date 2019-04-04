@@ -56,5 +56,40 @@ year2016 <- realis[which(year(realis$SaleDate) == 2016),]
 year2017 <- realis[which(year(realis$SaleDate) == 2017),]
 year2018 <- realis[which(year(realis$SaleDate) == 2018),]
 
+###data mgmt for leaflet###
+setwd("data")
+
+#read geojson files
+planning_area_map <- geojson_read("2-planning-area.geojson", what = "sp")
+
+setwd(home)
+
+#dplyr query
+year2018_n_transaction <- year2018 %>% group_by(PlanningArea) %>% tally(NoOfUnits)
+year2018_price <- year2018 %>% group_by(PlanningArea) %>% dplyr::summarize(TransactedPrice = mean(TransactedPrice/NoOfUnits, na.rm=TRUE))
+year2018_max <- year2018 %>% group_by(PlanningArea) %>% dplyr::summarize(TransactedPrice = max(TransactedPrice/NoOfUnits, na.rm=TRUE))
+year2018_median <- year2018 %>% group_by(PlanningArea) %>% dplyr::summarize(TransactedPrice = median(TransactedPrice/NoOfUnits, na.rm=TRUE))
+
+#caps data to match with polygon
+year2018_n_transaction$PlanningArea <- toupper(year2018_n_transaction$PlanningArea)
+year2018_price$PlanningArea <- toupper(year2018_price$PlanningArea)
+year2018_max$PlanningArea <- toupper(year2018_max$PlanningArea)
+year2018_median$PlanningArea <- toupper(year2018_median$PlanningArea)
+
+#append data to planning_area_map
+planning_area_map@data <- left_join(planning_area_map@data, year2018_price, by=c("name"="PlanningArea"))
+planning_area_map@data <- left_join(planning_area_map@data, year2018_n_transaction, by=c("name"="PlanningArea"))
+planning_area_map@data <- left_join(planning_area_map@data, year2018_max, by=c("name"="PlanningArea"))
+planning_area_map@data <- left_join(planning_area_map@data, year2018_median, by=c("name"="PlanningArea"))
+colnames(planning_area_map@data) <- c("name","mean_price","n_transaction","max_price","median_price")
+
+#replace all NA with 0 in data frame
+planning_area_map@data[is.na(planning_area_map@data)] <-0
+
+#divide price by 1million
+planning_area_map@data$mean_price <- planning_area_map@data$mean_price/1000000
+planning_area_map@data$max_price <- planning_area_map@data$max_price/1000000
+planning_area_map@data$median_price <- planning_area_map@data$median_price/1000000
+
 # Run the application 
 shinyApp(ui = "ui.R", server = "server.R")

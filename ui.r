@@ -75,7 +75,8 @@ ui <- dashboardPage(skin = "purple",
                                                                  height = 510,
                                                                  solidHeader = TRUE,
                                                                  collapsible = FALSE,
-                                                                 collapsed = FALSE
+                                                                 collapsed = FALSE,
+                                                                 leafletOutput("map", width="900px", height="450px")
                                                            )#end of box
                                                     )#end of column
                                               ),#end of fluidRow

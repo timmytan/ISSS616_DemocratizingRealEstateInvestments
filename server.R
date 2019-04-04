@@ -135,13 +135,47 @@ shinyServer(function(input, output,session) {
       getData <- eventReactive(input$analyze, {
             d <- getAreaData()
             
-            validate(
-                  need(nrow(d) > 0, "No historical transactions meet your criteria.")
-            )
-            
             return(d)
             
       }, ignoreNULL = FALSE)
+      
+      #########################################################################################
+      #                                     Heat Map                                          #
+      #########################################################################################
+      
+      # color palette & test binning
+      bins <- c(0, 1, 1.25, 1.50, 1.75, 2, 2.5, 3, Inf)
+      
+      #pal for palette
+      pal <- colorNumeric("plasma",domain = planning_area_map@data$n_transaction, NULL)
+      
+      labels<-sprintf(
+            "<strong>%s</strong><br/>Mean $%.3g million<br/>Median $%.3g million<br/>Max $%.3g million<br/>%g transaction</sup>",
+            planning_area_map@data$name,planning_area_map@data$mean_price,planning_area_map@data$median_price,
+            planning_area_map@data$max_price,planning_area_map@data$n_transaction) %>% lapply(htmltools::HTML)
+      
+      #map output
+      output$map <- renderLeaflet({
+            leaflet(planning_area_map) %>%
+                  setView(103.80835, 1.360365,zoom=11) %>%
+                  addTiles() %>%
+                  addPolygons(fillColor=~pal(planning_area_map@data$n_transaction), stroke=FALSE, smoothFactor = 0.3, fillOpacity = 1,dashArray =1,
+                              highlight=highlightOptions(
+                                    weight=5,
+                                    color="#666",
+                                    dashArray =3,
+                                    fillOpacity=0.7,
+                                    bringToFront=TRUE
+                              ),
+                              label=labels,
+                              labelOptions=labelOptions(
+                                    style=list("font-weight"="normal",padding="3px 8px"),
+                                    textsize="15px",
+                                    direction="auto"
+                              )
+                  ) %>%
+                  leaflet::addLegend(pal=pal,values=planning_area_map@data$n_transaction, opacity=0.7, title=NULL, position="bottomright")
+      })
       
       
       #########################################################################################
