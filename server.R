@@ -33,6 +33,42 @@ shinyServer(function(input, output,session) {
             return(p)
       })
       
+      # top 10 planning areas time series
+      output$top10TS <- renderChart({
+            med2018 <- aggregate(year2018$TransactedPrice ~ year2018$PlanningArea, FUN = median)
+            med2014 <- aggregate(year2014$TransactedPrice ~ year2014$PlanningArea, FUN = median)
+            combine <- merge(med2014, med2018, by.x = "year2014$PlanningArea", by.y = "year2018$PlanningArea")
+            combine$overallChange <- (combine$`year2018$TransactedPrice` - combine$`year2014$TransactedPrice`)/combine$`year2014$TransactedPrice`
+            combine$annualizedChange <- round(((1 + combine$overallChange)^(1/5) - 1) * 100, 4)
+            top10 <- arrange(combine, desc(annualizedChange))[1:10,]
+            top10 <- data.frame(top10[1:10,1])
+            colnames(top10) <- "PlanningArea"
+            
+            d <- realis
+            d$Quarter <- as.yearqtr(d$SaleDate, "%Y-%m-%d")
+            d <- aggregate(d$PricePSF ~ d$PlanningArea + d$Quarter, FUN = median)
+            colnames(d) <- c("PlanningArea","Quarter","PricePSF")
+            top10psf <- merge(top10, d, by = "PlanningArea")
+            top10psf <- tidyr::spread(top10psf, PlanningArea, PricePSF)
+            top10psf <- melt(top10psf, id = "Quarter")
+            names(top10psf) <- c("Quarter", "PlanningArea", "PricePSF")
+            top10psf$Quarter <- as.Date(as.yearqtr(top10psf$Quarter, format = "y %Q"), frac = 1)
+            p <- nPlot(PricePSF ~ Quarter, group = "PlanningArea", type = "lineChart", data = top10psf, dom = "top10TS")
+            p$xAxis(
+                  axisLabel = "Time",
+                  tickFormat = 
+                        "#!
+                  function(d){
+                  f =  d3.time.format.utc('%b%Y');
+                  return f(new Date( d*24*60*60*1000 ));
+                  }
+                  !#"
+            )
+            p$yAxis(axisLabel = "Median Price (PSF)", width = 40)
+            p$set(height = 550, width = 1300)
+            return(p)
+      })
+      
       #########################################################################################
       #                              Market Selection Functions                               #
       #########################################################################################

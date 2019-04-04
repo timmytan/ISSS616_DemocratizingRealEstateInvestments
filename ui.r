@@ -54,20 +54,25 @@ ui <- dashboardPage(skin = "purple",
                                                                  h2("ISSS616/AY2018-19T2/G6"),
                                                                  h3("Democratizing Real Estate Investments"),
                                                                  width = 4,
-                                                                 height = 600,
+                                                                 height = 500,
                                                                  background = "navy",
                                                                  solidHeader = FALSE,
                                                                  collapsible = FALSE,
                                                                  collapsed = FALSE,
-                                                                 p(
-                                                                       paste("Our ASAR Project")
+                                                                 h4("Our app aims to make real estate analysis a more simple and efficient process by levelling the playing field between you - the retail investor - and institutional investors."),
+                                                                 h4("Through the app, you have access to a set of sophisticated tools that are used by property developers to make informed decisions in your real estate negotiations."),
+                                                                 h4("On this dashboard, we make use of descriptive statistical techniques to: "),
+                                                                 h4(tags$ul(
+                                                                       tags$li("Provide a dynamic heat-map of property prices across all regions in Singapore, featuring measures of central tendency and transactional volume."),
+                                                                       tags$li("Provide a macro-overview of property prices in Singapore by featuring the top 10 regions with highest growth rate as well as median prices across a five year time-frame.")
+                                                                       )
                                                                  )
                                                            ),
                                                            
                                                            box(
                                                                  title = "Heat Map based on Transaction Volume",
                                                                  width = 8,
-                                                                 height = 600,
+                                                                 height = 500,
                                                                  solidHeader = TRUE,
                                                                  collapsible = FALSE,
                                                                  collapsed = FALSE
@@ -95,7 +100,8 @@ ui <- dashboardPage(skin = "purple",
                                                                  solidHeader = TRUE,
                                                                  width = 12,
                                                                  height = 600,
-                                                                 collapsible = TRUE
+                                                                 collapsible = TRUE,
+                                                                 showOutput("top10TS", "nvd3", package = "rCharts")
                                                            )#end of box
                                                     )#end of column
                                               )#end of fluidRow
