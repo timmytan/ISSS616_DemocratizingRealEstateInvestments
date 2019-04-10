@@ -32,7 +32,17 @@ ui <- dashboardPage(skin = "purple",
                                                              value = c(0, 1000)
                                                        )
                                                  ),
-                                                 menuItem("Forecast Models", tabName = "forecastModels", icon = NULL)
+                                                 menuItem("Confidence Interval Test", tabName = "confidenceintervaltest", icon = NULL),
+                                                 conditionalPanel(
+                                                   condition = "input.sbm == 'confidenceintervaltest'",
+                                                   uiOutput("areaUICI_1"),
+                                                   uiOutput("areaUICI_2"),
+                                                   fluidRow(
+                                                     column(6, numericInput(inputId = "conf_level",
+                                                                            label=strong("Confidence Level"),
+                                                                            value=0.95, min=0.1, max=0.99, step=0.01))),
+                                                   actionButton("analyzeCI", label = "Analyze")
+                                                 )
                                                  )
                                      ),
                     dashboardBody(
@@ -117,8 +127,8 @@ ui <- dashboardPage(skin = "purple",
                                                                  h1("Value Analysis"),
                                                                  h4("The Value Analysis page aims to assist you in making an informed choice of your property purchase. The page uses inferential statistical techniques to: "),
                                                                  h4(tags$ul(
-                                                                       tags$li("Provide price trend of selected planning region based on parameter inputs like tenure, year of completion, property age, distance to nearest MRT and childcare centre."),
-                                                                       tags$li("Provide comparative options based on similar price ranges. Back-end, we have tested that the price mean for these options are statistically similar through the ANOVA method.")
+                                                                       tags$li("Provide price trend of selected planning region based on parameter inputs like tenure, year of completion, property age, distance to nearest MRT and childcare centre.")
+                                                                       
                                                                  )
                                                                  ),
                                                                  width = 12,
@@ -156,7 +166,56 @@ ui <- dashboardPage(skin = "purple",
                                               )# end of conditional panel
                                               )#end of fluidRow
                                         )#end of fluidPage
-                                )#end of tabItem "valueAnalysis"
+                                ),#end of tabItem "valueAnalysis"
+                                tabItem(tabName = "confidenceintervaltest",
+                                        fluidPage(
+                                          fluidRow(
+                                            
+                                            column(width = 12,
+                                                   box(
+                                                     h1("ANOVA Test"),
+                                                     h4("The ANOVA Test aims to assist you in making an informed choice of your property purchase. The page uses inferential statistical techniques to: "),
+                                                     h4(tags$ul(
+                                                       tags$li("Inform if the Mean Price PSF in the 2 selected areas are significantly different based on a selected confidence level.")
+                                                     )
+                                                     ),
+                                                     width = 12,
+                                                     height = 250,
+                                                     background = "navy",
+                                                     solidHeader = FALSE,
+                                                     collapsible = FALSE,
+                                                     collapsed = FALSE,
+                                                     h4("Please select criteria using the options on the sidebar."),
+                                                     h4("H0: 2 selected areas are not significantly different."),
+                                                     h4("H1: 2 selected areas are significantly different.")
+                                                   ),#end of box
+                                                   conditionalPanel(
+                                                     condition = "input.analyzeCI",
+                                                     box(
+                                                       title=h3("Conclusion of Mean Price PSF Comparison"),
+                                                       mainPanel(h4(htmlOutput("CItest"))
+                                                       ),
+                                                       width=12,
+                                                       height=250,
+                                                       background = "green"
+                                                     ),#end of box
+                                                     box(
+                                                       title=h3("BoxPlot of Mean Price PSF for Selected Planning Area"),
+                                                       plotOutput("CIplot"),
+                                                       width=6,
+                                                       height=500
+                                                     ),
+                                                     box(
+                                                       title=h3("Confidence Intervals of Mean Price PSF Difference"),
+                                                       plotOutput("CIplot2"),
+                                                       width=6,
+                                                       height=500
+                                                     )
+                                                   )#end of panel
+                                            )#end of column
+                                          )#end of fluidrow
+                                        )#end of fluidpage
+                                )#end of tabitem "confidenceintervaltest"
                           )#end of tabItems
                     )#end of dashboardBody
 )#end of dashboardPage

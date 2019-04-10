@@ -256,5 +256,112 @@ shinyServer(function(input, output,session) {
                   return(p)
       })
 })# end of renderchart
+      #########################################################################################
+      #                             CI Functions                                              #
+      #########################################################################################
+      output$areaUICI_1 <- renderUI({
+        area <- sort(unique(year2018$PlanningArea))
+        selectInput("planningAreaCI_1", label = "Planning Area 1:", choices = c(Choose ='', as.character(area)), selected = dflt$planningArea, selectize = FALSE)
+      })
+      
+      output$areaUICI_2 <- renderUI({
+        area <- sort(unique(year2018$PlanningArea))
+        selectInput("planningAreaCI_2", label = "Planning Area 2:", choices = c(Choose ='', as.character(area)), selected = dflt$planningArea, selectize = FALSE)
+      })
+      
+      
+      CI_Data<-eventReactive(input$analyzeCI,{
+        d<-realis
+        areaCIname_1<-as.character(input$planningAreaCI_1)
+        areaCIname_2<-as.character(input$planningAreaCI_2)
+        
+        d <- subset(d, PlanningArea==areaCIname_1 | PlanningArea==areaCIname_2,
+                    select=c(PlanningArea,PricePSF))
+        
+        model<-lm(d$PricePSF~d$PlanningArea,data=d)
+        anova_model<-aov(model)
+        tukey_model<-TukeyHSD(x=anova_model,'d$PlanningArea',conf.level=input$conf_level)
+        
+        CIdiff<-tukey_model$`d$PlanningArea`[1,1]
+        CIlwr<-tukey_model$`d$PlanningArea`[1,2]
+        CIupr<-tukey_model$`d$PlanningArea`[1,3]
+        CIpadj<-tukey_model$`d$PlanningArea`[1,4]
+        
+        if(CIpadj>=0.5*(1-input$conf_level)){
+          
+          CIstatement<-sprintf(
+            "The mean difference is %.4g.<br/> The upper and lower CIs are %.4g and %.4g.<br/> The p-value is %.3g.<br/> %s and %s are not significantly different at confidence level of %.3g.",
+            CIdiff,CIupr,CIlwr,CIpadj,areaCIname_1,areaCIname_2,input$conf_level)%>% lapply(htmltools::HTML)
+        }
+        
+        else{
+          
+          CIstatement<-sprintf(
+            "The mean difference is %.4g.<br/> The upper and lower CIs are %.4g and %.4g.<br/> The p-value is %.3g.<br/> %s and %s are not significantly different at confidence level of %.3g.",
+            CIdiff,CIupr,CIlwr,CIpadj,areaCIname_1,areaCIname_2,input$conf_level)%>% lapply(htmltools::HTML)
+        }
+        
+        return(CIstatement)
+        
+        
+      }, ignoreNULL = FALSE)
+      
+      CI_boxplot<-eventReactive(input$analyzeCI,{
+        d<-realis
+        areaCIname_1<-as.character(input$planningAreaCI_1)
+        areaCIname_2<-as.character(input$planningAreaCI_2)
+        
+        d1 <- subset(d, PlanningArea==areaCIname_1,
+                     select=c(PlanningArea,PricePSF))
+        
+        d2 <- subset(d, PlanningArea==areaCIname_2,
+                     select=c(PlanningArea,PricePSF))
+        
+        a <- boxplot(d1$PricePSF,d2$PricePSF,ylab="Price PSF ($)",
+                     names =c(areaCIname_1,areaCIname_2),xlab="Planning Area",
+                     col=c('blue','red')
+        )
+        
+        
+        return(a)
+        
+        
+      }, ignoreNULL = FALSE)
+      
+      CI_boxplot2<-eventReactive(input$analyzeCI,{
+        d<-realis
+        areaCIname_1<-as.character(input$planningAreaCI_1)
+        areaCIname_2<-as.character(input$planningAreaCI_2)
+        
+        d <- subset(d, PlanningArea==areaCIname_1 | PlanningArea==areaCIname_2,
+                    select=c(PlanningArea,PricePSF))
+        
+        model<-lm(d$PricePSF~d$PlanningArea,data=d)
+        anova_model<-aov(model)
+        tukey_model<-TukeyHSD(x=anova_model,'d$PlanningArea',conf.level=input$conf_level)
+        
+        a <-plot(tukey_model,las=3,col="blue")
+        
+        return(a)
+        
+      }, ignoreNULL = FALSE)
+      
+      #########################################################################################
+      #                             CI Output                                                 #
+      #########################################################################################
+      
+      output$CItest<-renderUI({
+        CI_Data()
+      })
+      
+      output$CIplot<-renderPlot({
+        CI_boxplot()
+      })
+      
+      output$CIplot2<-renderPlot({
+        CI_boxplot2()
+      })
+      
+    
       
 })
