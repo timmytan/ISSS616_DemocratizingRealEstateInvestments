@@ -9,7 +9,7 @@ ui <- dashboardPage(skin = "purple",
                                                        uiOutput("areaUI"),
                                                        uiOutput("tenureUI"),
                                                        sliderInput(
-                                                             "propertAge",
+                                                             "propertyAge",
                                                              label = "Age of Property:",
                                                              min = 0,
                                                              max = 99,
@@ -20,7 +20,7 @@ ui <- dashboardPage(skin = "purple",
                                                              "childcareDist", 
                                                              label = "Distance from nearest childcare centre (in metres):", 
                                                              min = 0, 
-                                                             max = 5000, 
+                                                             max = 2500, 
                                                              value = c(0, 1000)
                                                        ),
                                                        
@@ -28,7 +28,7 @@ ui <- dashboardPage(skin = "purple",
                                                              "mrtDist", 
                                                              label = "Distance from nearest MRT station (in metres):", 
                                                              min = 0, 
-                                                             max = 5000, 
+                                                             max = 3500, 
                                                              value = c(0, 1000)
                                                        )
                                                  ),
@@ -139,7 +139,7 @@ ui <- dashboardPage(skin = "purple",
                                                                  title = "Median Transaction Value ($) Across Time",
                                                                  solidHeader = TRUE,
                                                                  width = 6,
-                                                                 height = 500,
+                                                                 height = 450,
                                                                  collapsible = TRUE,
                                                                  showOutput("medPriceTS", "nvd3", package = "rCharts")
                                                            ),#end of box
@@ -148,7 +148,7 @@ ui <- dashboardPage(skin = "purple",
                                                                  title = "Mean Price (PSF) Across Time",
                                                                  solidHeader = TRUE,
                                                                  width = 6,
-                                                                 height = 500,
+                                                                 height = 450,
                                                                  collapsible = TRUE,
                                                                  showOutput("meanPsfTS", "nvd3", package = "rCharts")
                                                            )#end of box

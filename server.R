@@ -42,10 +42,9 @@ shinyServer(function(input, output,session) {
             combine$overallChange <- (combine$`year2018$TransactedPrice` - combine$`year2014$TransactedPrice`)/combine$`year2014$TransactedPrice`
             combine$annualizedChange <- round(((1 + combine$overallChange)^(1/5) - 1) * 100, 4)
             top10 <- arrange(combine, desc(annualizedChange))[1:10,]
-            p <- nPlot(annualizedChange ~ `year2014$PlanningArea`, data = top10, type = "discreteBarChart", dom = "top10PlanningArea")
+            p <- nPlot(annualizedChange ~ `year2014$PlanningArea`, data = top10, type = "discreteBarChart", dom = "top10PlanningArea", height = 300, width = 1300)
             p$xAxis(axisLabel = "Plannning Region")
             p$yAxis(axisLabel = "Annual Growth Rate (%)", width = 40)
-            p$set(height = 300, width = 1300)
             return(p)
       })
       
@@ -69,7 +68,7 @@ shinyServer(function(input, output,session) {
             top10psf <- melt(top10psf, id = "Quarter")
             names(top10psf) <- c("Quarter", "PlanningArea", "PricePSF")
             top10psf$Quarter <- as.Date(as.yearqtr(top10psf$Quarter, format = "y %Q"), frac = 1)
-            p <- nPlot(PricePSF ~ Quarter, group = "PlanningArea", type = "lineChart", data = top10psf, dom = "top10TS")
+            p <- nPlot(PricePSF ~ Quarter, group = "PlanningArea", type = "lineChart", data = top10psf, dom = "top10TS", height = 550, width = 1300)
             p$xAxis(
                   axisLabel = "Time",
                   tickFormat = 
@@ -81,7 +80,6 @@ shinyServer(function(input, output,session) {
                   !#"
             )
             p$yAxis(axisLabel = "Median Price (PSF)", width = 40)
-            p$set(height = 550, width = 1300)
             return(p)
       })
       
@@ -115,8 +113,17 @@ shinyServer(function(input, output,session) {
             
             minMrt <- as.numeric(input$mrtDist[1])
             maxMrt <- as.numeric(input$mrtDist[2])
+            minChildcare <- as.numeric(input$childcareDist[1])
+            maxChildcare <- as.numeric(input$childcareDist[2])
+            minPropertyAge <- as.numeric(input$propertyAge[1])
+            maxPropertyAge <- as.numeric(input$propertyAge[2])
             
-            d <- subset(d, MrtDist >= minMrt & MrtDist <= maxMrt)
+            d <- subset(d, MrtDist >= minMrt & 
+                              MrtDist <= maxMrt & 
+                              ChildcareDistance_m >= minChildcare & 
+                              ChildcareDistance_m <= maxChildcare &
+                              AgeOfProperty >= minPropertyAge &
+                              AgeOfProperty <= maxPropertyAge)
             
             return(d)
       }
@@ -127,6 +134,11 @@ shinyServer(function(input, output,session) {
             # filter by planning area
             if (!is.null(input$planningArea) & (input$planningArea != "")) {
                   d <- d[which(d$PlanningArea == input$planningArea),]
+            }
+            
+            # filter by tenure
+            if (!is.null(input$tenure) & (input$tenure != "")) {
+                  d <- d[which(d$Tenure == input$tenure),]
             }
             
             return(d)
@@ -185,6 +197,9 @@ shinyServer(function(input, output,session) {
       output$medPriceTS <- renderChart({
             withProgress(message = "Rendering Time-Series for Your Selected Criteria", {
                   d <- getData()
+                  shiny::validate(
+                        need(nrow(d) > 1, "Not enough data. Please adjust parameters.")
+                  )
                   d <- data.frame(d$TransactedPrice, d$SaleDate)
                   colnames(d) <- c("TransactedPrice", "SaleDate")
                   z <- xts(d$TransactedPrice, as.Date(d$SaleDate, "%Y-%m-%d"))
@@ -193,7 +208,7 @@ shinyServer(function(input, output,session) {
                   colnames(medtsDF) <- c("Time", "TransactionValue")
                   medtsDF$Time <- as.Date.character(medtsDF$Time)
                   
-                  p <- nPlot(TransactionValue ~ Time, type = "lineChart", data = medtsDF, dom = "medPriceTS")
+                  p <- nPlot(TransactionValue ~ Time, type = "lineChart", data = medtsDF, dom = "medPriceTS", height = 400, width = 600)
                   p$xAxis(
                         axisLabel = "Time",
                         tickFormat = 
@@ -204,7 +219,6 @@ shinyServer(function(input, output,session) {
                         }
                         !#"
                   )
-                  p$set(height = 400, width = 600)
                   p$chart(showLegend = FALSE)
                   
                   return(p)
@@ -214,15 +228,19 @@ shinyServer(function(input, output,session) {
       output$meanPsfTS <- renderChart({
             withProgress(message = "Rendering Time-Series for Your Selected Criteria", {
                   d <- getData()
+                  shiny::validate(
+                        need(nrow(d) > 1, "Not enough data. Please adjust parameters.")
+                  )
                   d <- data.frame(d$PricePSF, d$SaleDate)
                   colnames(d) <- c("PricePSF", "SaleDate")
                   z <- xts(d$PricePSF, as.Date(d$SaleDate, "%Y-%m-%d"))
                   meanPsfTS <- apply.monthly(z, mean)
+                  meanPsfTS <- round(meanPsfTS, 0)
                   meanPsfTSDF <- data.frame(date=index(meanPsfTS), coredata(meanPsfTS))
                   colnames(meanPsfTSDF) <- c("Time", "PricePSF")
                   meanPsfTSDF$Time <- as.Date.character(meanPsfTSDF$Time)
                   
-                  p <- nPlot(PricePSF ~ Time, type = "lineChart", data = meanPsfTSDF, dom = "meanPsfTS")
+                  p <- nPlot(PricePSF ~ Time, type = "lineChart", data = meanPsfTSDF, dom = "meanPsfTS", height = 400, width = 600)
                   p$xAxis(
                         axisLabel = "Time",
                         tickFormat = 
@@ -233,7 +251,6 @@ shinyServer(function(input, output,session) {
                         }
                         !#"
                   )
-                  p$set(height = 400, width = 600)
                   p$chart(showLegend = FALSE)
                   
                   return(p)
