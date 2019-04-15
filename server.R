@@ -291,8 +291,8 @@ shinyServer(function(input, output,session) {
         if(CIpadj>=0.5*(1-input$conf_level)){
           
           CIstatement<-sprintf(
-            "The mean difference between the two planning areas is %.4g.<br/> The lower and upper limits of the mean difference (at %.3g confidence interval) are %.4g and %.4g respectively.<br/> 
-            P-value is %.3g > %.3g. Hence, the difference between the mean price (PSF) of properties in %s and properties in %s is not significantly different.",
+            "- The mean difference between the two planning areas is %.4g.<br/><br/>- The lower and upper limits of the mean difference (at %.3g confidence interval) are %.4g and %.4g respectively.<br/><br/> 
+            - P-value is %.3g > %.3g. Hence, the difference between the mean price (PSF) of properties in %s and properties in %s is not significantly different.",
             CIdiff,input$conf_level,CIlwr,CIupr,CIpadj,0.5*(1-input$conf_level),areaCIname_1,areaCIname_2,input$conf_level)%>% lapply(htmltools::HTML)
         }
         
@@ -300,7 +300,7 @@ shinyServer(function(input, output,session) {
           
           CIstatement<-sprintf(
                 "- The mean difference between the two planning areas is %.4g.<br/><br/>- The lower and upper limits of the mean difference (at %.3g confidence interval) are %.4g and %.4g respectively.<br/><br/> 
-           - P-value is %.3g < %.3g.<br/><br/>- Hence, the difference between the mean price(PSF) of properties in %s and properties in %s is significantly different.",
+           - P-value is %.3g < %.3g.<br/><br/>- Hence, the difference between the mean price (PSF) of properties in %s and properties in %s is significantly different.",
                 CIdiff,input$conf_level,CIlwr,CIupr,CIpadj,0.5*(1-input$conf_level),areaCIname_1,areaCIname_2,input$conf_level)%>% lapply(htmltools::HTML)
         }
         
