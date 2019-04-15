@@ -256,6 +256,7 @@ shinyServer(function(input, output,session) {
                   return(p)
       })
 })# end of renderchart
+      
       #########################################################################################
       #                             CI Functions                                              #
       #########################################################################################
@@ -290,15 +291,17 @@ shinyServer(function(input, output,session) {
         if(CIpadj>=0.5*(1-input$conf_level)){
           
           CIstatement<-sprintf(
-            "The mean difference is %.4g.<br/> The upper and lower CIs are %.4g and %.4g.<br/> The p-value is %.3g.<br/> %s and %s are not significantly different at confidence level of %.3g.",
-            CIdiff,CIupr,CIlwr,CIpadj,areaCIname_1,areaCIname_2,input$conf_level)%>% lapply(htmltools::HTML)
+            "The mean difference between the two planning areas is %.4g.<br/> The lower and upper limits of the mean difference (at %.3g confidence interval) are %.4g and %.4g respectively.<br/> 
+            P-value is %.3g > %.3g. Hence, the difference between the mean price (PSF) of properties in %s and properties in %s is not significantly different.",
+            CIdiff,input$conf_level,CIlwr,CIupr,CIpadj,0.5*(1-input$conf_level),areaCIname_1,areaCIname_2,input$conf_level)%>% lapply(htmltools::HTML)
         }
         
         else{
           
           CIstatement<-sprintf(
-            "The mean difference is %.4g.<br/> The upper and lower CIs are %.4g and %.4g.<br/> The p-value is %.3g.<br/> %s and %s are not significantly different at confidence level of %.3g.",
-            CIdiff,CIupr,CIlwr,CIpadj,areaCIname_1,areaCIname_2,input$conf_level)%>% lapply(htmltools::HTML)
+                "- The mean difference between the two planning areas is %.4g.<br/><br/>- The lower and upper limits of the mean difference (at %.3g confidence interval) are %.4g and %.4g respectively.<br/><br/> 
+           - P-value is %.3g < %.3g.<br/><br/>- Hence, the difference between the mean price(PSF) of properties in %s and properties in %s is significantly different.",
+                CIdiff,input$conf_level,CIlwr,CIupr,CIpadj,0.5*(1-input$conf_level),areaCIname_1,areaCIname_2,input$conf_level)%>% lapply(htmltools::HTML)
         }
         
         return(CIstatement)
@@ -362,6 +365,599 @@ shinyServer(function(input, output,session) {
         CI_boxplot2()
       })
       
-    
+      #########################################################################################
+      #                              Price Estimate Functions                               #
+      #########################################################################################
       
+      output$RegionUIMLR <- renderUI({
+            area <- sort(unique(year2018$PlanningRegion))
+            selectInput("PlanningRegionMLR", label = "Planning Region:", choices = c(Choose ='', as.character(area)), selected = dflt$planningRegion, selectize = FALSE)
+      })
+      
+      output$tenureUIMLR <- renderUI({
+            tenure <- sort(unique(year2018$Tenure))
+            selectInput("tenureMLR", label = "Tenure:", choices = c(Choose = '', as.character(tenure)), selected = dflt$tenure, selectize = FALSE)
+      })
+      
+      output$PropertyTypeUIMLR <- renderUI({
+            tenure <- sort(unique(year2018$PropertyType))
+            selectInput("PropertyTypeMLR", label = "Property Type:", choices = c(Choose = '', as.character(tenure)), selected = dflt$PropertyType, selectize = FALSE)
+      })
+      
+      output$saletypeUIMLR <- renderUI({
+            tenure <- sort(unique(year2018$SaleType))
+            selectInput("SaleTypeMLR", label = "Sale Type:", choices = c(Choose = '', as.character(tenure)), selected = dflt$PropertyType, selectize = FALSE)
+      })
+      
+      output$minMrtDist <- renderText(input$mrtDist[1])
+      
+      output$minMrtDist <- renderText(input$mrtDist[1])
+      
+      
+      #Output for Expected Value
+      
+      
+      output$MLR<- renderText({
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        #MLR Model
+        #Linear model via backwards,forward and stepwise yield the same result, model and all independent variables are significant 
+        
+        #backwards multivariate-linear regression test
+        #model = lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+        #          , data=realisMLR)
+        
+        #model=stepAIC(model, direction ="backwards")
+        #summary(model)
+        
+        #forward multivariate-linear regression test
+        #model = lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+        #           , data=realisMLR)
+        
+        #model=stepAIC(model, direction ="forward")
+        #summary(model)
+        
+        #sideways multivariate-linear regression test
+        #model = lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+        #           , data=realisMLR)
+        
+        #model=stepAIC(model, direction ="both")
+        #summary(model)
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        #matching categorical variables to derive coefficient
+        PlanningRegion=paste('PlanningRegion',input$PlanningRegionMLR,sep='')
+        ColforPlanningRegion<-match(PlanningRegion,coefficientnames)
+        PlanningRegionCoefficient=unname(summaryMLR)[ColforPlanningRegion]
+        
+        if(input$PlanningRegionMLR=="Central Region"){
+          PlanningRegionCoefficient<-0
+        }
+        
+        Tenure=paste('Tenure',input$tenureMLR,sep='')
+        ColforTenure<-match(Tenure,coefficientnames)
+        TenureCoefficient=unname(summaryMLR)[ColforTenure]
+        
+        if(input$tenureMLR=="99 Yrs Leasehold"){
+          TenureCoefficient<-0
+        }
+        
+        SaleType=paste('SaleType',input$SaleTypeMLR,sep='')
+        ColforSaleType<-match(SaleType,coefficientnames)
+        SaleTypeCoefficient=unname(summaryMLR)[ColforSaleType]
+        
+        if(input$SaleTypeMLR=="New Sale"){
+          SaleTypeCoefficient<-0
+        }
+        
+        Intercept<-unname(summaryMLR)[1]
+        AreaSQMCoefficient<-unname(summaryMLR)[2]
+        PropertyAgeCoefficient<-unname(summaryMLR)[3]
+        FloorCoefficient<-unname(summaryMLR)[4]
+        StopsfromCityCentreCoefficient<-unname(summaryMLR)[5]
+        ChilcareDistCoefficient<-unname(summaryMLR)[6]
+        MrtDistCoefficient<-unname(summaryMLR)[7]
+        
+        
+        #Expected Property Value based on user input (only Floor level for now)
+        ExpectedValue<-round((input$AreaSQM*AreaSQMCoefficient+input$propertyAgeMLR*PropertyAgeCoefficient+input$FloorLevel*FloorCoefficient +input$ChildcareDistanceMLR*ChilcareDistCoefficient+input$MrtDistMLR*MrtDistCoefficient
+                              +PlanningRegionCoefficient+TenureCoefficient+SaleTypeCoefficient+StopsfromCityCentreCoefficient*input$NoofStopsAwayFromCityCentre+Intercept),0)
+        
+        
+        sprintf(
+          "- %i to %i stops from the City Centre (Raffles Place MRT Station) in the %s .<br /><br />
+          - Tenure: %s <br /><br />
+          - Sales Type: %s <br /><br />
+          - Floor Level: %i to %i <br /><br />
+          - Size of Unit : %i to %i Square Meters<br /><br />
+          - Distance from Nearest ChildCare Centre: %i to %i m<br /><br />
+          - Distance from MRT: %i to %i m" ,
+          input$NoofStopsAwayFromCityCentre[1],input$NoofStopsAwayFromCityCentre[2], input$PlanningRegionMLR, input$tenureMLR, input$SaleTypeMLR, input$FloorLevel[1], input$FloorLevel[2],input$AreaSQM[1],input$AreaSQM[2], input$ChildcareDistanceMLR[1],input$ChildcareDistanceMLR[2],input$MrtDistMLR[1],input$MrtDistMLR[2]
+        )
+      })
+      
+      
+      
+      output$MLR2<- renderText({
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        #matching categorical variables to derive coefficient
+        PlanningRegion=paste('PlanningRegion',input$PlanningRegionMLR,sep='')
+        ColforPlanningRegion<-match(PlanningRegion,coefficientnames)
+        PlanningRegionCoefficient=prettyNum(round(unname(summaryMLR)[ColforPlanningRegion]),big.mark=",",scientific=FALSE)
+        
+        if(input$PlanningRegionMLR=="Central Region"){
+          PlanningRegionCoefficient<-0
+        }
+        
+        Tenure=paste('Tenure',input$tenureMLR,sep='')
+        ColforTenure<-match(Tenure,coefficientnames)
+        TenureCoefficient=prettyNum(round(unname(summaryMLR)[ColforTenure],0),big.mark=",",scientific=FALSE)
+        
+        
+        if(input$tenureMLR=="99 Yrs Leasehold"){
+          TenureCoefficient<-0
+        }
+        
+        SaleType=paste('SaleType',input$SaleTypeMLR,sep='')
+        ColforSaleType<-match(SaleType,coefficientnames)
+        SaleTypeCoefficient=prettyNum(round(unname(summaryMLR)[ColforSaleType]),big.mark=",",scientific=FALSE)
+        
+        if(input$SaleTypeMLR=="New Sale"){
+          SaleTypeCoefficient<-0
+        }
+        
+        
+        Intercept<-prettyNum(round(unname(summaryMLR)[1],0),big.mark=",",scientific=FALSE)
+        AreaSQMCoefficient<-prettyNum(round(unname(summaryMLR)[2],0),big.mark=",",scientific=FALSE)
+        PropertyAgeCoefficient<-prettyNum(round(unname(summaryMLR)[3],0),big.mark=",",scientific=FALSE)
+        FloorCoefficient<-prettyNum(round(unname(summaryMLR)[4],0),big.mark=",",scientific=FALSE)
+        StopsfromCityCentreCoefficient<-prettyNum(round(unname(summaryMLR)[5],0),big.mark=",",scientific=FALSE)
+        ChilcareDistCoefficient<-prettyNum(round(unname(summaryMLR)[6],0),big.mark=",",scientific=FALSE)
+        MrtDistCoefficient<-prettyNum(round(unname(summaryMLR)[7],0),big.mark=",",scientific=FALSE)
+        
+        AreaSQMMinValue<-prettyNum(round(unname(summaryMLR)[2]*input$AreaSQM[1],0),big.mark=",",scientific=FALSE)
+        AreaSQMMaxValue<-prettyNum(round(unname(summaryMLR)[2]*input$AreaSQM[2],0),big.mark=",",scientific=FALSE)
+        PropertyAgeMinValue<-prettyNum(round(unname(summaryMLR)[3]*input$propertyAgeMLR[1],0),big.mark=",",scientific=FALSE)
+        PropertyAgeMaxValue<-prettyNum(round(unname(summaryMLR)[3]*input$propertyAgeMLR[2],0),big.mark=",",scientific=FALSE)
+        FloorMinValue<-prettyNum(round(unname(summaryMLR)[4]*input$FloorLevel[1],0),big.mark=",",scientific=FALSE)
+        FloorMaxValue<-prettyNum(round(unname(summaryMLR)[4]*input$FloorLevel[2],0),big.mark=",",scientific=FALSE)
+        StopsfromCityCentreMinValue<-prettyNum(round(unname(summaryMLR)[5]*input$NoofStopsAwayFromCityCentre[1],0),big.mark=",",scientific=FALSE)
+        StopsfromCityCentreMaxValue<-prettyNum(round(unname(summaryMLR)[5]*input$NoofStopsAwayFromCityCentre[2],0),big.mark=",",scientific=FALSE)
+        ChilcareDistMinValue<-prettyNum(round(unname(summaryMLR)[6]*input$ChildcareDistanceMLR[1],0),big.mark=",",scientific=FALSE)
+        ChilcareDistMaxVAlue<-prettyNum(round(unname(summaryMLR)[6]*input$ChildcareDistanceMLR[2],0),big.mark=",",scientific=FALSE)
+        MrtDistMinValue<-prettyNum(round(unname(summaryMLR)[7]*input$MrtDistMLR[1],0),big.mark=",",scientific=FALSE)
+        MrtDistMaxValue<-prettyNum(round(unname(summaryMLR)[7]*input$MrtDistMLR[2],0),big.mark=",",scientific=FALSE)
+        
+        
+        #Expected Property Value based on user input (only Floor level for now)
+        
+        
+        sprintf(
+          "Model: <br /><br />
+          Estimated Price = <br /> <br />
+          %s * AreaSQM <br /> <br />
+          %s * Property Age <br /> <br />
+          + %s * Floor Level <br /> <br />
+          %s * Stops from City Centre <br /> <br />
+          + %s * Distance from nearest Childcare Centre  <br /><br />
+          %s * Distance from nearest MRT Station <br /><br />
+          + %s ( %s ) <br /><br />
+          %s (%s) <br /><br />
+          + %s (%s) <br /><br />
+          + %s (intercept)" ,
+          AreaSQMCoefficient,
+          PropertyAgeCoefficient,
+          FloorCoefficient,
+          StopsfromCityCentreCoefficient,
+          ChilcareDistCoefficient, 
+          MrtDistCoefficient, 
+          SaleTypeCoefficient, input$SaleTypeMLR, PlanningRegionCoefficient, input$PlanningRegionMLR, TenureCoefficient, input$tenureMLR, Intercept)
+      })
+      
+      
+      output$MLR3<- renderValueBox({
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        adj_r_squared=round(summary(model)$adj.r.squared,2)
+        
+        valueBox(
+          paste0(adj_r_squared), h4("Adjusted R Square of Model"), 
+          icon = NULL, color = "navy")
+      })
+      
+      output$MLR4<- renderValueBox({
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        #matching categorical variables to derive coefficient
+        PlanningRegion=paste('PlanningRegion',input$PlanningRegionMLR,sep='')
+        ColforPlanningRegion<-match(PlanningRegion,coefficientnames)
+        PlanningRegionCoefficient=unname(summaryMLR)[ColforPlanningRegion]
+        
+        if(input$PlanningRegionMLR=="Central Region"){
+          PlanningRegionCoefficient<-0
+        }
+        
+        Tenure=paste('Tenure',input$tenureMLR,sep='')
+        ColforTenure<-match(Tenure,coefficientnames)
+        TenureCoefficient=unname(summaryMLR)[ColforTenure]
+        
+        if(input$tenureMLR=="99 Yrs Leasehold"){
+          TenureCoefficient<-0
+        }
+        
+        SaleType=paste('SaleType',input$SaleTypeMLR,sep='')
+        ColforSaleType<-match(SaleType,coefficientnames)
+        SaleTypeCoefficient=unname(summaryMLR)[ColforSaleType]
+        
+        if(input$SaleTypeMLR=="New Sale"){
+          SaleTypeCoefficient<-0
+        }
+        
+        Intercept<-unname(summaryMLR)[1]
+        AreaSQMCoefficient<-unname(summaryMLR)[2]
+        PropertyAgeCoefficient<-unname(summaryMLR)[3]
+        FloorCoefficient<-unname(summaryMLR)[4]
+        StopsfromCityCentreCoefficient<-unname(summaryMLR)[5]
+        ChilcareDistCoefficient<-unname(summaryMLR)[6]
+        MrtDistCoefficient<-unname(summaryMLR)[7]
+        
+        #Expected Property Value based on user input (only Floor level for now)
+        ExpectedMinValue<-round((input$AreaSQM[1]*AreaSQMCoefficient+input$propertyAgeMLR[2]*PropertyAgeCoefficient+input$FloorLevel[1]*FloorCoefficient +input$ChildcareDistanceMLR[1]*ChilcareDistCoefficient+input$MrtDistMLR[2]*MrtDistCoefficient
+                                 +PlanningRegionCoefficient+TenureCoefficient+SaleTypeCoefficient+StopsfromCityCentreCoefficient*input$NoofStopsAwayFromCityCentre[2]+Intercept),0)
+        
+        ExpectedMaxValue<-round((input$AreaSQM[2]*AreaSQMCoefficient+input$propertyAgeMLR[1]*PropertyAgeCoefficient+input$FloorLevel[2]*FloorCoefficient +input$ChildcareDistanceMLR[2]*ChilcareDistCoefficient+input$MrtDistMLR[1]*MrtDistCoefficient
+                                 +PlanningRegionCoefficient+TenureCoefficient+SaleTypeCoefficient+StopsfromCityCentreCoefficient*input$NoofStopsAwayFromCityCentre[1]+Intercept),0)
+        
+        
+        ExpectedMinValue<-prettyNum(ExpectedMinValue,big.mark=",",scientific=FALSE)
+        ExpectedMaxValue<-prettyNum(ExpectedMaxValue,big.mark=",",scientific=FALSE)
+        
+        valueBox(
+          paste0("$" ,ExpectedMinValue, " - ", "$", ExpectedMaxValue), h4("Expected Transaction Price"), 
+          icon = NULL, color = "green")
+      })
+      
+      
+      output$InterceptCoefficient <- renderValueBox({
+        
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        Intercept<-round(unname(summaryMLR)[1],0)
+        
+        Intercept<-prettyNum(Intercept,big.mark=",",scientific=FALSE)
+        
+        valueBox(
+          paste0( Intercept), h4("Intercept"),
+          icon = NULL, color = "red")
+      })
+      
+      output$AreaCoefficient <- renderValueBox({
+        
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        AreaSQM<-round(unname(summaryMLR)[2],0)
+        
+        AreaSQM<-prettyNum(AreaSQM,big.mark=",",scientific=FALSE)
+        
+        valueBox(
+          paste0("+", AreaSQM), h4("AreaSQM"),
+          icon = NULL, color = "olive")
+      })
+      
+      output$PropertyAgeCoefficient <- renderValueBox({
+        
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        PropertyAge<-round(unname(summaryMLR)[3],0)
+        
+        PropertyAge<-prettyNum(PropertyAge,big.mark=",",scientific=FALSE)
+        
+        valueBox(
+          paste0( PropertyAge), h4("Property Age"),
+          icon = NULL, color = "olive")
+      })
+      
+      output$FloorCoefficient <- renderValueBox({
+        
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        Floor<-round(unname(summaryMLR)[4],0)
+        
+        Floor<-prettyNum(Floor,big.mark=",",scientific=FALSE)
+        
+        valueBox(
+          paste0(Floor), h4("Floor Level"),
+          icon = NULL, color = "olive")
+      })
+      
+      output$StopsfromCityCentreCoefficient <- renderValueBox({
+        
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        StopsfromCityCentre<-round(unname(summaryMLR)[5],0)
+        
+        StopsfromCityCentre<-prettyNum(StopsfromCityCentre,big.mark=",",scientific=FALSE)
+        
+        valueBox(
+          paste0( StopsfromCityCentre), h4("Stops from City Centre"),
+          icon = NULL, color = "olive")
+      })
+      
+      output$ChilcareDistCoefficient <- renderValueBox({
+        
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        ChilcareDist<-round(unname(summaryMLR)[6],0)
+        
+        ChilcareDist<-prettyNum(ChilcareDist,big.mark=",",scientific=FALSE)
+        
+        valueBox(
+          paste0("+", ChilcareDist), h4("Distance (Childcare)"),
+          icon = NULL, color = "olive")
+      })
+      
+      output$MrtDistCoefficient <- renderValueBox({
+        
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        MrtDist<-round(unname(summaryMLR)[7],0)
+        
+        MrtDist<-prettyNum(MrtDist,big.mark=",",scientific=FALSE)
+        
+        valueBox(
+          paste0( MrtDist), h4("Distance (MRT Station)"),
+          icon = NULL, color = "olive")
+      })
+      
+      output$PlanningRegionCoefficient <- renderValueBox({
+        
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        PlanningRegion=paste('PlanningRegion',input$PlanningRegionMLR,sep='')
+        ColforPlanningRegion<-match(PlanningRegion,coefficientnames)
+        PlanningRegionCoefficient=unname(summaryMLR)[ColforPlanningRegion]
+        
+        if(input$PlanningRegionMLR=="Central Region"){
+          PlanningRegionCoefficient<-0
+        }
+        
+        PlanningRegionCoefficient<-round(PlanningRegionCoefficient,0)
+        
+        PlanningRegionCoefficient<-prettyNum(PlanningRegionCoefficient,big.mark=",",scientific=FALSE)
+        
+        valueBox(
+          paste0( PlanningRegionCoefficient), h4(input$PlanningRegionMLR),
+          icon = NULL, color = "olive")
+      })
+      
+      output$TenureCoefficient <- renderValueBox({
+        
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        Tenure=paste('Tenure',input$tenureMLR,sep='')
+        ColforTenure<-match(Tenure,coefficientnames)
+        TenureCoefficient=prettyNum(round(unname(summaryMLR)[ColforTenure],0),big.mark=",",scientific=FALSE)
+        
+        
+        if(input$tenureMLR=="99 Yrs Leasehold"){
+          TenureCoefficient<-0
+        }
+
+        TenureCoefficient<-prettyNum(TenureCoefficient,big.mark=",",scientific=FALSE)
+        
+        valueBox(
+          paste0("+", TenureCoefficient), h4(input$tenureMLR),
+          icon = NULL, color = "olive")
+      })
+      
+      output$SalesTypeCoefficient <- renderValueBox({
+        
+        realisMLR<-realis
+        realisMLR$PlanningRegion=as.factor(realisMLR$PlanningRegion)
+        realisMLR$Tenure=as.factor(realisMLR$Tenure)
+        realisMLR$SaleType=as.factor(realisMLR$SaleType)
+        realisMLR$Type=as.factor(realisMLR$Type)
+        realisMLR$PropertyType=as.factor(realisMLR$PropertyType)
+        
+        
+        #Final Model
+        model=lm(PriceperUnit ~ AreaSQM + AgeOfProperty + Floor + NoofStopsAwayFromCityCentre  + ChildcareDistance_m + MrtDist + Tenure + PlanningRegion + SaleType
+                 , data=realisMLR)
+        
+        summaryMLR<-summary(model)$coefficients[,1]
+        
+        coefficientnames<-names(summaryMLR)
+        
+        SaleType=paste('SaleType',input$SaleTypeMLR,sep='')
+        ColforSaleType<-match(SaleType,coefficientnames)
+        SaleTypeCoefficient=unname(summaryMLR)[ColforSaleType]
+        
+        if(input$SaleTypeMLR=="New Sale"){
+          SaleTypeCoefficient<-0
+        }
+        
+        SaleTypeCoefficient<-round(SaleTypeCoefficient,0)
+        SaleTypeCoefficient<-prettyNum(SaleTypeCoefficient,big.mark=",",scientific=FALSE)
+        
+        valueBox(
+          paste0( "+",SaleTypeCoefficient), h4(input$SaleTypeMLR),
+          icon = NULL, color = "olive")
+      })
+      
+      
+      
+
 })

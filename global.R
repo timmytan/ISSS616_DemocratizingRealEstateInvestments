@@ -20,6 +20,7 @@ library(svglite)
 library(stringr)
 library(zoo)
 library(xts)
+library(DT)
 
 home <- "C:/Users/Timothy/Documents/MITB Coursework/ISSS616 Applied Statistical Analysis with R/Project/Application/ISSS616_DemocratizingRealEstateInvestments/"
 
@@ -48,6 +49,7 @@ realis$SaleDate <- as.Date(x = realis$SaleDate, "%d-%B-%y")
 realis$Tenure <- gsub("\\From.*", "", realis$Tenure)
 realis$AgeOfProperty <- as.numeric(year(today())) - as.numeric(realis$CompletionDate)
 realis$AgeOfProperty[is.na(realis$AgeOfProperty)] <- 0
+realis$PriceperUnit<-realis$TransactedPrice/realis$NoOfUnits
 
 # splitting into years
 year2014 <- realis[which(year(realis$SaleDate) == 2014),]

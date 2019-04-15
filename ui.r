@@ -31,20 +31,75 @@ ui <- dashboardPage(skin = "purple",
                                                              max = 3500, 
                                                              value = c(0, 1000)
                                                        )
-                                                 ),
+                                                 ), #end of conditional panel for menuItem: value analyzer
+                                                 
+                                                 
+                                                 
+                                                 menuItem("Price Estimate", tabName = "PriceEstimate", icon = NULL),
+                                                 conditionalPanel(
+                                                   condition = "input.sbm == 'PriceEstimate'",
+                                                   uiOutput("RegionUIMLR"),
+                                                   uiOutput("tenureUIMLR"),
+                                                   uiOutput("saletypeUIMLR"),
+                                                   sliderInput(
+                                                     "FloorLevel",
+                                                     label = "Floor Level:",
+                                                     min = 0,
+                                                     max = 100,
+                                                     value = c(33,66)
+                                                   ),
+                                                   sliderInput(
+                                                     "AreaSQM",
+                                                     label = "Area (Square Meter):",
+                                                     min = 0,
+                                                     max = 300,
+                                                     value = c(100,200)
+                                                   ),
+                                                   sliderInput(
+                                                     "propertyAgeMLR",
+                                                     label = "Age of Property:",
+                                                     min = 0,
+                                                     max = 50,
+                                                     value = c(15,25)
+                                                   ),
+                                                   sliderInput(
+                                                     "NoofStopsAwayFromCityCentre",
+                                                     label = "No of Stops Away From City Centre:",
+                                                     min = 0,
+                                                     max = 40,
+                                                     value = c(10,15)
+                                                   ),
+                                                   sliderInput(
+                                                     "ChildcareDistanceMLR",
+                                                     label = "Distance from nearest Childcare Centre:",
+                                                     min = 0,
+                                                     max = 1000,
+                                                     value = c(333,666)
+                                                   ),
+                                                   sliderInput(
+                                                     "MrtDistMLR",
+                                                     label = "Distance from nearest MRT:",
+                                                     min = 0,
+                                                     max = 1500,
+                                                     value = c(500,1000)
+                                                   )
+                                                 ),#end of conditional panel for menuItem: Price Estimate
+                                                 
+                                                 
                                                  menuItem("Confidence Interval Test", tabName = "confidenceintervaltest", icon = NULL),
                                                  conditionalPanel(
-                                                   condition = "input.sbm == 'confidenceintervaltest'",
-                                                   uiOutput("areaUICI_1"),
-                                                   uiOutput("areaUICI_2"),
-                                                   fluidRow(
-                                                     column(6, numericInput(inputId = "conf_level",
-                                                                            label=strong("Confidence Level"),
-                                                                            value=0.95, min=0.1, max=0.99, step=0.01))),
-                                                   actionButton("analyzeCI", label = "Analyze")
-                                                 )
-                                                 )
-                                     ),
+                                                       condition = "input.sbm == 'confidenceintervaltest'",
+                                                       uiOutput("areaUICI_1"),
+                                                       uiOutput("areaUICI_2"),
+                                                       fluidRow(
+                                                             column(6, numericInput(inputId = "conf_level",
+                                                                                    label=strong("Confidence Level"),
+                                                                                    value=0.95, min=0.1, max=0.99, step=0.01))),
+                                                       actionButton("analyzeCI", label = "Analyze")
+                                                 ) #end of conditional panel for menuItem: confidence interval test
+                                     )
+                    ),
+                                     
                     dashboardBody(
                           tabItems(
                                 tabItem(tabName = "dashboard",
@@ -167,6 +222,96 @@ ui <- dashboardPage(skin = "purple",
                                               )#end of fluidRow
                                         )#end of fluidPage
                                 ),#end of tabItem "valueAnalysis"
+                                tabItem(tabName = "PriceEstimate",
+                                        fluidPage(
+                                              fluidRow(
+                                                    column(width = 12,
+                                                           box(
+                                                                 h1("Price Estimate"),
+                                                                 h4("The Price Estimator page aims to provide you with a forecasted price of the selected planning region based on a multiple linear regression model. 
+                                                                    "),
+                                                                 h4(tags$ul(
+                                                                       tags$li("Provide price trend of selected planning region based on parameter inputs like tenure, year of completion, property age, distance to nearest MRT and childcare centre."),
+                                                                       tags$li("A point estimate forecast and a 95% confidence interval will be derived. This means that there is a 95% chance that the forecasted price falls within this range.
+                                                                               ")
+                                                                       )
+                                                                 ),
+                                                                 width = 12,
+                                                                 height = 250,
+                                                                 background = "navy",
+                                                                 solidHeader = FALSE,
+                                                                 collapsible = FALSE,
+                                                                 collapsed = FALSE,
+                                                                 h4("Please select criteria using the options on the sidebar."),
+                                                                 actionButton("analyzeMLR", label = "Analyze"), 
+                                                                 actionButton("ModelEq", label = "Model Equation")
+                                                                 
+                                                                 )
+                                                           )#end of column
+                                                    ),#end of fluidRow
+                                              
+                                              conditionalPanel(
+                                                    condition = "input.analyzeMLR && input.analyzeMLR%2==1",
+                                                    fluidRow(
+                                                          column(width = 12,
+                                                                 valueBoxOutput("MLR4", width =12)
+                                                          )#end of column
+                                                    ),#end of fluid row
+                                                    fluidRow(
+                                                          column(width = 12,
+                                                                 box(
+                                                                       h3("You are measuring a property with the following traits:"),
+                                                                       h4(htmlOutput("MLR")
+                                                                       ),
+                                                                       width=12,
+                                                                       height=360,
+                                                                       background = "light-blue"
+                                                                 )#end of box
+                                                          )#end of column
+                                                    )#end of fluid row
+                                              ), # end of conditional panel
+                                              
+                                                           
+                                
+                                            conditionalPanel(
+                                                  condition = "input.ModelEq && input.ModelEq%2==1",
+                                                  fluidRow(
+                                                        column(width = 12,
+                                                               box(
+                                                                     h1("Model Equation:"),
+                                                                     width=3,
+                                                                     height=80,
+                                                                     background = "orange"
+                                                               )
+                                                        )#end of column
+                                                  ),#end of fluid row
+                                                  fluidRow(
+                                                        column(width = 12,
+                                                               valueBoxOutput("InterceptCoefficient", width =3),
+                                                               valueBoxOutput("AreaCoefficient", width =3),
+                                                               valueBoxOutput("PropertyAgeCoefficient", width =3),
+                                                               valueBoxOutput("FloorCoefficient", width =3)
+                                                        )#end of column
+                                                  ),#end of fluid row
+                                                  fluidRow(
+                                                        column(width = 12,
+                                                               valueBoxOutput("StopsfromCityCentreCoefficient", width =3),
+                                                               valueBoxOutput("ChilcareDistCoefficient", width =3),
+                                                               valueBoxOutput("MrtDistCoefficient", width =3),
+                                                               valueBoxOutput("PlanningRegionCoefficient", width =3)
+                                                               
+                                                        )
+                                                  ),
+                                                  fluidRow(
+                                                        column(width = 12,
+                                                               valueBoxOutput("TenureCoefficient", width =3),
+                                                               valueBoxOutput("SalesTypeCoefficient", width =3)
+                                                        )
+                                                  )
+                                            )# end of conditional panel
+                                            )#end of fluidPage
+                                      ),#end of tabItem "PriceEstimate"
+                                
                                 tabItem(tabName = "confidenceintervaltest",
                                         fluidPage(
                                           fluidRow(
@@ -186,18 +331,17 @@ ui <- dashboardPage(skin = "purple",
                                                      collapsible = FALSE,
                                                      collapsed = FALSE,
                                                      h4("Please select criteria using the options on the sidebar."),
-                                                     h4("H0: 2 selected areas are not significantly different."),
-                                                     h4("H1: 2 selected areas are significantly different.")
+                                                     h4("H0: Mean price (PSF) in Planning Area 1 is EQUAL to mean price (PSF) in Planning Area 2"),
+                                                     h4("H1: Mean price (PSF) in Planning Area 1 is NOT EQUAL to mean price (PSF) in Planning Area 2")
                                                    ),#end of box
                                                    conditionalPanel(
                                                      condition = "input.analyzeCI",
                                                      box(
-                                                       title=h3("Conclusion of Mean Price PSF Comparison"),
-                                                       mainPanel(h4(htmlOutput("CItest"))
-                                                       ),
-                                                       width=12,
+                                                       h3("Conclusion of Mean Price PSF Comparison"),
+                                                       h4(htmlOutput("CItest")),
+                                                       width=8,
                                                        height=250,
-                                                       background = "green"
+                                                       background = "light-blue"
                                                      ),#end of box
                                                      box(
                                                        title=h3("BoxPlot of Mean Price PSF for Selected Planning Area"),
@@ -216,7 +360,9 @@ ui <- dashboardPage(skin = "purple",
                                           )#end of fluidrow
                                         )#end of fluidpage
                                 )#end of tabitem "confidenceintervaltest"
-                          )#end of tabItems
+                                
+                                
+                                )#end of tabItems
                     )#end of dashboardBody
 )#end of dashboardPage
                                               
